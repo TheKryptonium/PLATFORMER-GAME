@@ -5,6 +5,46 @@ import pygame
 from os import listdir
 from os.path import isfile, join
 
+class Player(pygame.sprite.Sprite) : 
+    COLOR=(255,0,0)
+
+    def __init___(self, x, y ,width, height):#Caractéristiques du personnage
+        self.rect=pygame.Rect(x,y,width,height)
+        self.x_vel=0
+        self.y_vel=0
+        self.mask=None
+        self.direction="left"
+        self.animation_count=0
+
+
+    def move(self,dx,dy): #deplacement du personnage
+        self.rect.x+=dx
+        self.rect.y+=dy
+
+    def move_left(self,vel):
+        self.x_vel=-vel
+        if(self.direction!="left"):
+            self.direction="left"
+            self.animation_count=0
+
+
+    def move_right(self,vel):
+        self.x_vel=vel
+        if(self.direction!="right"):
+            self.direction="right"
+            self.animation_count=0
+    
+    def loop(self,fps):
+        self.move(self.x_vel,self.y_vel)
+    
+    def draw(self, win):
+        
+
+
+
+
+
+
 pygame.init()
 
 pygame.display.set_caption("PLATFORMER GAME")
@@ -39,13 +79,14 @@ def main(window) :
 
     while playing:
         clock.tick(FPS)
+        draw(window, background, bg_image)
 
         for event in pygame.event.get():
             if event.type==pygame.QUIT:
                 playing=False
                 break
-    
-    draw(window, background, bg_image)
+        draw(window, background, bg_image)
+                
     
     pygame.quit()
     quit()
