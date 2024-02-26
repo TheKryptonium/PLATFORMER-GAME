@@ -202,16 +202,33 @@ def handle_vertical_collision(player,objects,dy):
             if dy < 0 :
                 player.rect.top=obj.rect.bottom
                 player.hit_head()
+
+        collide_objects.append(obj)
+
+
+def collide(player, objects, dx):
+    player.move(dx,0)
+    player.update()
+    collided_object = None
+    for obj in objects : 
+        if pygame.sprite.collide_mask(player, obj):
+            collided_object = obj
+            break
+    player.move(-dx,0)
+    player.update()
+    return collided_object
     
 
 def handle_move(player,objects):
     keys = pygame.key.get_pressed()
 
     player.x_vel=0
+    collide_left = collide(player, objects, -PLAYER_VEL * 2)
+    collide_right = collide(player, objects, PLAYER_VEL * 2)
 
-    if keys[pygame.K_LEFT] :
+    if keys[pygame.K_LEFT]  and not collide_left:
         player.move_left(PLAYER_VEL)
-    if keys[pygame.K_RIGHT] :
+    if keys[pygame.K_RIGHT] and not collide_right:
         player.move_right(PLAYER_VEL)
     
     handle_vertical_collision(player, objects,player.y_vel)
@@ -229,13 +246,15 @@ def main(window) :
     
     player=Player(0, 0, 60, 50)
     floor=[Block(i*block_size,HEIGHT-block_size,block_size) for i in range(-WIDTH//block_size, WIDTH*2//block_size)]
+    objects=(*floor, Block(0, HEIGHT-block_size*2,block_size),Block(block_size*3, HEIGHT/1.5,block_size))
+
 
     playing=True
     while playing:
         clock.tick(FPS)
         player.loop(FPS)
-        handle_move(player,floor)
-        draw(window, background, bg_image,player,floor,offset_x)
+        handle_move(player,objects)
+        draw(window, background, bg_image,player,objects,offset_x)
 
         for event in pygame.event.get():
             if event.type==pygame.QUIT:
