@@ -137,6 +137,7 @@ class Player(pygame.sprite.Sprite) : #classe des personnages
         sprite_index=(self.animation_count//self.ANIMATION_DELAY)%len(sprites)
         self.sprite=sprites[sprite_index]
         self.animation_count+=1
+        self.update()
 
 
     def draw(self, win,offset_x):
@@ -165,7 +166,32 @@ class Block(Object):
         self.image.blit(block,(0,0))
         self.mask=pygame.mask.from_surface(self.image)
 
+class Fire(Object):
+    ANIMATION_DELAY=3
+    def __init__(self, x, y, width, height, name=None):
+        super().__init__(x, y, width, height,"fire")
+        self.fire=load_sprite_sheets("Traps","Fire", width, height)
+        self.image=self.fire["off."][0]
+        self.mask=pygame.mask.from_surface(self.image)
+        self.animation_count=0
+        self.animation_name="off."
+    
+    def on(self):
+        self.animation_name="on."
+    
+    def hit(self):
+        self.animation_name="hit."
+    
+    def loop(self):
+        sprites=self.fire[self.animation_name]
+        sprite_index=(self.animation_count//self.ANIMATION_DELAY)%len(sprites)
+        self.image=sprites[sprite_index]
+        self.animation_count+=1
+        
 
+        if self.animation_count // self.ANIMATION_DELAY > len(sprites) :
+            self.animation_count=0 
+       
 
 
 
@@ -245,13 +271,16 @@ def main(window) :
     scroll_area_width=200
     
     player=Player(0, 0, 60, 50)
+    fire = Fire(100,HEIGHT-block_size-64,16,32)
+    fire.on()
     floor=[Block(i*block_size,HEIGHT-block_size,block_size) for i in range(-WIDTH//block_size, WIDTH*2//block_size)]
-    objects=(*floor, Block(0, HEIGHT-block_size*2,block_size),Block(block_size*3, HEIGHT/1.5,block_size))
+    objects=(*floor, Block(0, HEIGHT-block_size*2,block_size),Block(block_size*3, HEIGHT/1.5,block_size), fire)
 
 
     playing=True
     while playing:
         clock.tick(FPS)
+        fire.loop()
         player.loop(FPS)
         handle_move(player,objects)
         draw(window, background, bg_image,player,objects,offset_x)
