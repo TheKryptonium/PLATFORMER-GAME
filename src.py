@@ -6,6 +6,8 @@ from os import listdir
 from os.path import isfile, join
 
 
+
+
 pygame.init()
 
 pygame.display.set_caption("PLATFORMER GAME")
@@ -45,16 +47,23 @@ def load_sprite_sheets(dir1, dir2, width, height, direction=False):
     
     return all_sprites
 
+def load_block(size):
+    path=join("assets","Terrain","Terrain.png")
+    image=pygame.image.load(path).convert_alpha()
+    surface=pygame.Surface((size,size), pygame.SRCALPHA, 32)
+    rect=pygame.Rect(96,0,size,size)
+    surface.blit(image,(0,0),rect)
+    return pygame.transform.scale2x(surface)
 
 
-
-class Player(pygame.sprite.Sprite) : 
+class Player(pygame.sprite.Sprite) : #classe des personnages
     COLOR=(0,0,0)
     GRAVITY = 1
     ANIMATION_DELAY=5
     SPRITES=load_sprite_sheets("MainCharacters","PinkMan",32,32,True)
 
     def __init__(self, x, y ,width, height):#Caractéristiques du personnage
+        super().__init__()
         self.rect=pygame.Rect(x,y,width,height)
         self.x_vel=0
         self.y_vel=0
@@ -90,7 +99,7 @@ class Player(pygame.sprite.Sprite) :
 
     
     def update(self):
-        self.rect=self.sprite.get_rect(top_left=(self.rect.x,self.rect.y))
+        self.rect=self.sprite.get_rect(topleft=(self.rect.x,self.rect.y))
         self.mask=pygame.mask.from_surface(self.sprite)
 
     def update_sprite(self):
@@ -111,6 +120,32 @@ class Player(pygame.sprite.Sprite) :
 
 
 
+
+class Object(pygame.sprite.Sprite): #classe des objets d'environnements
+    def __init__(self, x,y,width,height,name=None) :
+        super().__init__()
+        self.rect=pygame.Rect(x,y,width,height)
+        self.image=pygame.Surface((width,height),pygame.SRCALPHA)
+        self.width=width
+        self.height=height
+        self.name=name
+    
+    def draw(self,win):
+        win.blit(self.image,(self.rect.x,self.rect.y))
+    
+
+class Block(Object):
+    def __init__(self, x, y, size):
+        super().__init__(x, y, size,size)
+        block = load_block(size)
+        self.image.blit(block,(0,0))
+        self.mask=pygame.mask.from_surface(self.image)
+
+
+
+
+
+
 def get_background(name) :
     image = pygame.image.load(join("assets","Background",name))
     _,_,width,height=image.get_rect()
@@ -123,9 +158,14 @@ def get_background(name) :
     return tiles, image
 
 
-def draw(window, background, bg_image,player):
+def draw(window, background, bg_image,player,objects):
     for tile in background:
         window.blit(bg_image, tile)
+    
+    for obj in objects:
+        obj.draw(window)
+
+    
 
     player.draw(window)
     pygame.display.update()
@@ -145,17 +185,19 @@ def main(window) :
     
     clock = pygame.time.Clock()
     
-    background,bg_image = get_background("Blue.png")   
+    background,bg_image = get_background("Blue.png")  
+    block_size=96
     
     
     player=Player(0, 0, 60, 50)
+    floor=[Block(i*block_size,HEIGHT-block_size,block_size) for i in range(-WIDTH//block_size, WIDTH*2//block_size)]
 
     playing=True
     while playing:
         clock.tick(FPS)
         player.loop(FPS)
         handle_move(player)
-        draw(window, background, bg_image,player)
+        draw(window, background, bg_image,player,floor)
 
         for event in pygame.event.get():
             if event.type==pygame.QUIT:
