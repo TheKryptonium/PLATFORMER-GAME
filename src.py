@@ -72,7 +72,9 @@ class Player(pygame.sprite.Sprite) : #classe des personnages
         self.animation_count=0
         self.fall_count=0
         self.jump_count=0
-    
+        self.hit=False
+        self.hit_count=0
+
     def jump(self):
         self.y_vel=-self.GRAVITY*8
         self.animation_count=0
@@ -98,9 +100,19 @@ class Player(pygame.sprite.Sprite) : #classe des personnages
             self.direction="right"
             self.animation_count=0
     
+    def make_hit(self):
+        self.hit=True
+        self.hit_count=0
+
     def loop(self,fps):
         self.y_vel += min(1,(self.fall_count/fps)*self.GRAVITY)
         self.move(self.x_vel,self.y_vel)
+
+        if self.hit:
+            self.hit_count+=1
+        if self.hit_count>fps*2:
+            self.hit=False
+            self.hit_count=0
         
         self.fall_count+=1
         self.update_sprite()
@@ -122,7 +134,9 @@ class Player(pygame.sprite.Sprite) : #classe des personnages
     def update_sprite(self):
         sprite_sheet="idle"
 
-        if self.y_vel < 0:
+        if self.hit :
+            sprite_sheet="hit"
+        elif self.y_vel < 0:
             if self.jump_count==1:
                 sprite_sheet="jump"
             elif self.jump_count==2:
@@ -228,8 +242,9 @@ def handle_vertical_collision(player,objects,dy):
             if dy < 0 :
                 player.rect.top=obj.rect.bottom
                 player.hit_head()
-
-        collide_objects.append(obj)
+            collide_objects.append(obj)
+    
+    return collide_objects
 
 
 def collide(player, objects, dx):
@@ -257,8 +272,12 @@ def handle_move(player,objects):
     if keys[pygame.K_RIGHT] and not collide_right:
         player.move_right(PLAYER_VEL)
     
-    handle_vertical_collision(player, objects,player.y_vel)
+    vertical_collide = handle_vertical_collision(player, objects,player.y_vel)
+    tocheck = [collide_left, collide_right, *vertical_collide]
 
+    for obj in tocheck : 
+        if obj and obj.name=="fire":
+            player.make_hit()
 
 def main(window) :
     
@@ -274,7 +293,7 @@ def main(window) :
     fire = Fire(100,HEIGHT-block_size-64,16,32)
     fire.on()
     floor=[Block(i*block_size,HEIGHT-block_size,block_size) for i in range(-WIDTH//block_size, WIDTH*2//block_size)]
-    objects=(*floor, Block(0, HEIGHT-block_size*2,block_size),Block(block_size*3, HEIGHT/1.5,block_size), fire)
+    objects=(*floor, Block(0, HEIGHT-block_size*2,block_size),Block(block_size*3, HEIGHT/1.8,block_size), fire)
 
 
     playing=True
